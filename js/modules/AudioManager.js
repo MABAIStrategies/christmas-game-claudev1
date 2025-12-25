@@ -1,4 +1,6 @@
 // AudioManager.js - Handle background music and sound effects
+import { ProceduralMusic } from './ProceduralMusic.js';
+
 export class AudioManager {
     constructor() {
         this.bgMusic = null;
@@ -9,6 +11,7 @@ export class AudioManager {
         this.audioContext = null;
         this.musicVolume = 0.4;
         this.sfxVolume = 0.6;
+        this.proceduralMusic = new ProceduralMusic();
 
         this.initAudioContext();
     }
@@ -17,6 +20,7 @@ export class AudioManager {
         try {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
             this.audioContext = new AudioContext();
+            this.proceduralMusic.init();
         } catch (e) {
             console.warn('Web Audio API not supported, falling back to HTML5 audio');
         }
@@ -51,22 +55,52 @@ export class AudioManager {
 
     // Play background music based on chapter/mood
     playBackgroundMusic(chapter, role) {
-        if (!this.musicEnabled || !this.bgMusic) return;
+        if (!this.musicEnabled) return;
 
-        // Generate appropriate music based on chapter and role
-        // In production, these would be actual audio files
-        // For now, we'll use royalty-free URLs or procedural audio
+        // Use procedural music system
+        const mood = this.getMusicMood(chapter, role);
 
-        const musicTracks = this.getMusicTrack(chapter, role);
+        // Stop current music if different
+        if (this.currentTrack !== mood) {
+            this.proceduralMusic.fadeOut(1000);
 
-        if (musicTracks.url !== this.currentTrack) {
-            this.fadeOutMusic(() => {
-                this.currentTrack = musicTracks.url;
-                this.bgMusic.src = musicTracks.url;
-                this.bgMusic.play().catch(e => console.warn('Audio playback failed:', e));
-                this.fadeInMusic();
-            });
+            setTimeout(() => {
+                this.currentTrack = mood;
+
+                // Play appropriate procedural music
+                switch (mood) {
+                    case 'peaceful':
+                        this.proceduralMusic.playPeacefulMusic();
+                        break;
+                    case 'mysterious':
+                        this.proceduralMusic.playMysteriousMusic();
+                        break;
+                    case 'tense':
+                        this.proceduralMusic.playTenseMusic();
+                        break;
+                    case 'epic':
+                        this.proceduralMusic.playEpicMusic();
+                        break;
+                    default:
+                        this.proceduralMusic.playPeacefulMusic();
+                }
+
+                this.proceduralMusic.fadeIn(2000);
+            }, 1000);
         }
+    }
+
+    // Get music mood for chapter and role
+    getMusicMood(chapter, role) {
+        const moodMap = {
+            1: { giver: 'peaceful', seeker: 'mysterious' },
+            2: { giver: 'tense', seeker: 'mysterious' },
+            3: { giver: 'mysterious', seeker: 'tense' },
+            4: { giver: 'mysterious', seeker: 'tense' },
+            5: { giver: 'epic', seeker: 'epic' }
+        };
+
+        return moodMap[chapter]?.[role] || 'peaceful';
     }
 
     // Get appropriate music track
@@ -289,6 +323,8 @@ export class AudioManager {
 
     // Stop all audio
     stopAll() {
+        this.proceduralMusic.stopAll();
+
         if (this.bgMusic) {
             this.bgMusic.pause();
             this.bgMusic.currentTime = 0;
@@ -306,11 +342,26 @@ export class AudioManager {
     toggleMusic() {
         this.musicEnabled = !this.musicEnabled;
 
-        if (!this.musicEnabled && this.bgMusic) {
-            this.fadeOutMusic();
-        } else if (this.musicEnabled && this.bgMusic) {
-            this.bgMusic.play().catch(e => console.warn('Music playback failed:', e));
-            this.fadeInMusic();
+        if (!this.musicEnabled) {
+            this.proceduralMusic.fadeOut(1000);
+        } else {
+            // Resume current track
+            const mood = this.currentTrack || 'peaceful';
+            switch (mood) {
+                case 'peaceful':
+                    this.proceduralMusic.playPeacefulMusic();
+                    break;
+                case 'mysterious':
+                    this.proceduralMusic.playMysteriousMusic();
+                    break;
+                case 'tense':
+                    this.proceduralMusic.playTenseMusic();
+                    break;
+                case 'epic':
+                    this.proceduralMusic.playEpicMusic();
+                    break;
+            }
+            this.proceduralMusic.fadeIn(1000);
         }
 
         return this.musicEnabled;
