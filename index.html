@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#1a0f0f">
+    <title>The Winter Kindling - A Christmas Adventure</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Snowfall Canvas -->
+    <canvas id="snowfall"></canvas>
+
+    <!-- Main Game Container -->
+    <div id="game-container">
+        <!-- Start Screen -->
+        <div id="start-screen" class="screen active">
+            <div class="title-container">
+                <h1 class="game-title">The Winter Kindling</h1>
+                <p class="subtitle">A Tale of Two Souls</p>
+            </div>
+
+            <div class="start-content">
+                <div class="folklore-intro">
+                    <p class="folklore-text">
+                        In the depths of winter, when frost writes secrets on windowpanes,
+                        there burns a flame that exists between heartbeats...
+                    </p>
+                </div>
+
+                <div class="player-selection">
+                    <h2>Choose Your Path</h2>
+                    <div class="player-cards">
+                        <div class="player-card" data-player="1">
+                            <div class="card-header">Player One</div>
+                            <div class="card-body">
+                                <h3>The Giver</h3>
+                                <p>A toymaker's apprentice who hears whispers in the workshop...</p>
+                                <div class="character-icon giver-icon">🎁</div>
+                            </div>
+                            <button class="select-btn" data-role="giver">Select Path</button>
+                        </div>
+
+                        <div class="player-card" data-player="2">
+                            <div class="card-header">Player Two</div>
+                            <div class="card-body">
+                                <h3>The Seeker</h3>
+                                <p>A winter spirit searching for a memory lost in time...</p>
+                                <div class="character-icon seeker-icon">❄️</div>
+                            </div>
+                            <button class="select-btn" data-role="seeker">Select Path</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="difficulty-selection hidden">
+                    <h2>Choose Your Challenge</h2>
+                    <div class="difficulty-buttons">
+                        <button class="difficulty-btn" data-difficulty="easy">
+                            <span class="diff-title">Gentle Snowfall</span>
+                            <span class="diff-desc">For those who savor the story</span>
+                        </button>
+                        <button class="difficulty-btn" data-difficulty="medium">
+                            <span class="diff-title">Winter's Breath</span>
+                            <span class="diff-desc">A balanced challenge</span>
+                        </button>
+                        <button class="difficulty-btn" data-difficulty="hard">
+                            <span class="diff-title">Frostbite</span>
+                            <span class="diff-desc">For the bold and cunning</span>
+                        </button>
+                    </div>
+                </div>
+
+                <button id="start-game-btn" class="primary-btn hidden">Begin Your Journey</button>
+            </div>
+        </div>
+
+        <!-- Chapter Screen -->
+        <div id="chapter-screen" class="screen">
+            <div class="chapter-intro">
+                <h2 class="chapter-title"></h2>
+                <p class="chapter-description"></p>
+                <div class="chapter-ornament"></div>
+                <button class="continue-btn">Continue</button>
+            </div>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <!-- HUD -->
+            <div class="game-hud">
+                <div class="hud-left">
+                    <div class="player-indicator">
+                        <span class="player-role"></span>
+                        <span class="player-number"></span>
+                    </div>
+                    <div class="chapter-progress">
+                        <span class="current-chapter"></span>
+                        <span class="current-level"></span>
+                    </div>
+                </div>
+                <div class="hud-center">
+                    <div class="kindling-meter">
+                        <div class="kindling-flame"></div>
+                        <div class="kindling-value">0</div>
+                    </div>
+                </div>
+                <div class="hud-right">
+                    <button class="hint-btn" title="Hint">💡</button>
+                    <button class="menu-btn" title="Menu">☰</button>
+                </div>
+            </div>
+
+            <!-- Main Game Area -->
+            <div class="game-area">
+                <div class="narrative-box">
+                    <p class="narrative-text"></p>
+                </div>
+
+                <div class="puzzle-container">
+                    <!-- Puzzles will be dynamically loaded here -->
+                </div>
+
+                <div class="choice-container hidden">
+                    <!-- Choices will be dynamically loaded here -->
+                </div>
+            </div>
+
+            <!-- Action Bar -->
+            <div class="action-bar">
+                <button class="action-btn" id="examine-btn">Examine</button>
+                <button class="action-btn" id="interact-btn">Interact</button>
+                <button class="action-btn" id="inventory-btn">Inventory</button>
+            </div>
+        </div>
+
+        <!-- Inventory Modal -->
+        <div id="inventory-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Your Gatherings</h3>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div id="inventory-grid"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Menu Modal -->
+        <div id="menu-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Game Menu</h3>
+                    <button class="modal-close">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <button class="menu-option" id="save-game">Save Progress</button>
+                    <button class="menu-option" id="load-game">Load Progress</button>
+                    <button class="menu-option" id="toggle-music">Music: <span id="music-status">On</span></button>
+                    <button class="menu-option" id="restart-level">Restart Level</button>
+                    <button class="menu-option" id="return-to-menu">Return to Menu</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completion Screen -->
+        <div id="completion-screen" class="screen">
+            <div class="completion-content">
+                <h2 class="completion-title"></h2>
+                <p class="completion-text"></p>
+                <div class="completion-stats"></div>
+                <button class="next-level-btn">Continue</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Audio Elements -->
+    <audio id="background-music" loop></audio>
+    <audio id="sfx-success"></audio>
+    <audio id="sfx-error"></audio>
+    <audio id="sfx-mystery"></audio>
+
+    <!-- Loading Indicator -->
+    <div id="loading-screen">
+        <div class="loading-spinner"></div>
+        <p>Kindling the flame...</p>
+    </div>
+
+    <!-- Game Scripts -->
+    <script type="module" src="js/main.js"></script>
+</body>
+</html>
