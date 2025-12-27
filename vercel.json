@@ -1,6 +1,7 @@
 {
   "version": 2,
   "name": "the-winter-kindling",
+    "cleanUrls": true,
   "headers": [
     {
       "source": "/(.*)",
