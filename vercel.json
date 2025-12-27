@@ -1,12 +1,6 @@
 {
   "version": 2,
   "name": "the-winter-kindling",
-  "builds": [
-    {
-      "src": "index.html",
-      "use": "@vercel/static"
-    }
-  ],
   "headers": [
     {
       "source": "/(.*)",
