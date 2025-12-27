@@ -5,6 +5,9 @@ import { AudioManager } from './modules/AudioManager.js';
 import { PuzzleManager } from './modules/PuzzleManager.js';
 import { ProceduralGenerator } from './modules/ProceduralGenerator.js';
 import { SnowfallEffect } from './modules/SnowfallEffect.js';
+import { HintSystem } from './modules/HintSystem.js';
+import { VoiceNarration } from './modules/VoiceNarration.js';
+import { MultiplayerManager } from './modules/MultiplayerManager.js';
 import { NARRATIVE_DATA } from '../data/narrative.js';
 
 class WinterKindlingGame {
@@ -14,9 +17,13 @@ class WinterKindlingGame {
         this.audioManager = new AudioManager();
         this.puzzleManager = new PuzzleManager(this.gameState);
         this.snowfall = new SnowfallEffect('snowfall');
+        this.hintSystem = new HintSystem(this.gameState);
+        this.voiceNarration = new VoiceNarration();
+        this.multiplayerManager = new MultiplayerManager(this.gameState);
         this.narrativeData = NARRATIVE_DATA;
         this.proceduralGen = null;
         this.currentLevelStartTime = null;
+        this.multiplayerEnabled = false;
     }
 
     init() {
@@ -26,6 +33,8 @@ class WinterKindlingGame {
         this.uiManager.init();
         this.audioManager.init();
         this.snowfall.init();
+        this.voiceNarration.init();
+        this.multiplayerManager.init();
 
         // Setup event listeners
         this.setupEventListeners();
@@ -33,10 +42,23 @@ class WinterKindlingGame {
         // Setup game state listeners
         this.setupGameStateListeners();
 
+        // Add voice narration toggle
+        this.addVoiceNarrationControls();
+
+        // Add multiplayer option
+        this.addMultiplayerControls();
+
         // Show start screen
         this.uiManager.showScreen('start', true);
 
         console.log('✨ Game initialized successfully!');
+
+        // Welcome narration
+        if (this.voiceNarration.isAvailable()) {
+            setTimeout(() => {
+                this.voiceNarration.speak('Welcome to The Winter Kindling. A tale of two souls bound by time.');
+            }, 1000);
+        }
     }
 
     setupEventListeners() {
@@ -573,13 +595,117 @@ class WinterKindlingGame {
 
     showHint() {
         const state = this.gameState.getState();
-        state.hintsUsed++;
-
-        this.uiManager.showNotification(
-            'Hints are still being crafted by the Kindling...',
-            'info',
-            3000
+        const result = this.hintSystem.getHint(
+            state.currentChapter,
+            state.currentLevel,
+            this.currentPuzzle?.type,
+            this.hintSystem.hintsUsedThisLevel
         );
+
+        if (!result.success) {
+            this.uiManager.showNotification(result.message, 'warning', 3000);
+            return;
+        }
+
+        this.uiManager.showNotification(result.hint, 'info', 8000);
+        this.audioManager.playSFX('mystery');
+
+        // Narrate hint if enabled
+        if (this.voiceNarration.enabled) {
+            this.voiceNarration.announce(result.hint);
+        }
+    }
+
+    addVoiceNarrationControls() {
+        // Add toggle button to menu
+        const menuBody = document.querySelector('#menu-modal .modal-body');
+        if (!menuBody) return;
+
+        const narrationBtn = document.createElement('button');
+        narrationBtn.className = 'menu-option';
+        narrationBtn.id = 'toggle-narration';
+        narrationBtn.innerHTML = 'Voice Narration: <span id="narration-status">Off</span>';
+        narrationBtn.addEventListener('click', (e) => {
+            const enabled = this.voiceNarration.toggle();
+            const status = e.currentTarget.querySelector('#narration-status');
+            if (status) {
+                status.textContent = enabled ? 'On' : 'Off';
+            }
+            this.uiManager.showNotification(`Voice narration ${enabled ? 'enabled' : 'disabled'}`, 'info');
+        });
+
+        menuBody.insertBefore(narrationBtn, menuBody.children[2]);
+    }
+
+    addMultiplayerControls() {
+        // Add multiplayer button to start screen
+        const startContent = document.querySelector('.start-content');
+        if (!startContent) return;
+
+        const mpSection = document.createElement('div');
+        mpSection.className = 'multiplayer-section';
+        mpSection.style.marginTop = '2rem';
+        mpSection.style.padding = '1rem';
+        mpSection.style.border = '2px solid var(--ice-blue)';
+        mpSection.style.borderRadius = '15px';
+        mpSection.style.background = 'rgba(74, 144, 164, 0.1)';
+
+        mpSection.innerHTML = `
+            <h3 style="font-family: var(--font-title); color: var(--gold); text-align: center; margin-bottom: 1rem;">
+                Multiplayer Mode
+            </h3>
+            <p style="text-align: center; margin-bottom: 1rem; font-size: 0.9rem;">
+                Play with a friend on a different device!
+            </p>
+            <div style="display: flex; gap: 1rem; justify-content: center;">
+                <button id="create-room-btn" class="menu-option" style="flex: 1; max-width: 200px;">
+                    Create Room
+                </button>
+                <button id="join-room-btn" class="menu-option" style="flex: 1; max-width: 200px;">
+                    Join Room
+                </button>
+            </div>
+            <div id="room-info" class="hidden" style="margin-top: 1rem; text-align: center;">
+                <p>Room Code: <strong id="room-code" style="color: var(--gold); font-size: 1.5rem;">----</strong></p>
+                <p id="waiting-text">Waiting for other player...</p>
+            </div>
+        `;
+
+        startContent.appendChild(mpSection);
+
+        // Setup multiplayer event listeners
+        document.getElementById('create-room-btn')?.addEventListener('click', async () => {
+            if (!this.tempPlayerRole) {
+                this.uiManager.showNotification('Please select a player role first', 'warning');
+                return;
+            }
+
+            const roomCode = await this.multiplayerManager.createRoom(this.tempPlayerRole);
+            document.getElementById('room-code').textContent = roomCode;
+            document.getElementById('room-info').classList.remove('hidden');
+            this.multiplayerEnabled = true;
+            this.uiManager.showNotification('Room created! Share the code with your friend.', 'success');
+        });
+
+        document.getElementById('join-room-btn')?.addEventListener('click', async () => {
+            const roomCode = prompt('Enter room code:');
+            if (!roomCode) return;
+
+            if (!this.tempPlayerRole) {
+                this.uiManager.showNotification('Please select a player role first', 'warning');
+                return;
+            }
+
+            try {
+                await this.multiplayerManager.joinRoom(roomCode.toUpperCase(), this.tempPlayerRole);
+                this.multiplayerEnabled = true;
+                this.uiManager.showNotification('Joined room successfully!', 'success');
+                document.getElementById('room-info').classList.remove('hidden');
+                document.getElementById('room-code').textContent = roomCode.toUpperCase();
+            } catch (error) {
+                this.uiManager.showNotification(error.message, 'error');
+            }
+        });
     }
 
     getItemIcon(itemName) {

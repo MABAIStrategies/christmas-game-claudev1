@@ -64,6 +64,48 @@ Based on your choices throughout the game, experience one of five unique endings
 
 ---
 
+## ✨ NEW ENHANCEMENTS (v2.0)
+
+### 🎵 Procedural Music System
+- **Dynamic music generation** using Web Audio API
+- Chapter-specific moods (peaceful, mysterious, tense, epic)
+- Smooth transitions and real-time synthesis
+- No external audio files needed—music is generated on-the-fly!
+
+### 💡 Comprehensive Hint System
+- **Level-specific hints** tailored to each puzzle
+- **Context-aware assistance** based on player performance
+- **Progressive hint revelation** (more detailed hints over time)
+- Cooldown system based on difficulty tier
+- 100+ unique hints across all chapters and puzzle types
+
+### 🗣️ Voice Narration
+- **Text-to-speech narration** using Web Speech API
+- Dramatic story narration with natural pauses
+- Character dialogue with distinct vocal characteristics
+- Toggle on/off in game menu
+- Fully accessible gameplay experience
+
+### 👥 Multiplayer Mode
+- **Two-player co-op** on separate devices
+- Room code system for easy connection
+- Shared progress tracking
+- Choice synchronization
+- Works via LocalStorage (same device) or Firebase (different devices)
+
+### 🧩 Expanded Puzzle Collection
+**20+ puzzle types** including all originals plus:
+- Word Association
+- Color Matching
+- Math Sequences (Fibonacci, factorials, primes)
+- Symbol Substitution
+- Maze Navigation
+- Sliding Tile Puzzles
+- Anagrams
+- And more!
+
+---
+
 ## 🎯 How to Play
 
 ### Getting Started
@@ -101,6 +143,7 @@ Based on your choices throughout the game, experience one of five unique endings
 ```
 christmas-game-claudev1/
 ├── index.html                 # Main HTML file
+├── vercel.json               # Vercel deployment config
 ├── styles/
 │   └── main.css              # All game styles
 ├── js/
@@ -109,12 +152,15 @@ christmas-game-claudev1/
 │       ├── GameState.js      # State management
 │       ├── UIManager.js      # UI updates and transitions
 │       ├── AudioManager.js   # Music and SFX
+│       ├── ProceduralMusic.js    # Procedural music generation
 │       ├── PuzzleManager.js  # Puzzle rendering and logic
-│       ├── ProceduralGenerator.js  # Level generation
-│       └── SnowfallEffect.js # Visual effects
+│       ├── ProceduralGenerator.js  # Level generation (20+ puzzles)
+│       ├── SnowfallEffect.js # Visual effects
+│       ├── HintSystem.js     # Context-aware hints (NEW)
+│       ├── VoiceNarration.js # Text-to-speech (NEW)
+│       └── MultiplayerManager.js  # Multiplayer support (NEW)
 ├── data/
 │   └── narrative.js          # Story content and structure
-├── audio/                    # Audio files (to be added)
 └── README.md                 # This file
 ```
 

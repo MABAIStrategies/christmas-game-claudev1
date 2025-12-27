@@ -445,6 +445,248 @@ export class ProceduralGenerator {
     generateTrustCoordination(difficulty) {
         return { type: 'trust-coordination', failureConsequence: difficulty === 'hard' ? 'severe' : 'moderate' };
     }
+
+    // Additional Puzzle Variations
+
+    // Word Association Puzzle
+    generateWordAssociation(difficulty) {
+        const wordSets = {
+            easy: [
+                { words: ['snow', 'cold', 'winter', 'ice'], answer: 'frost' },
+                { words: ['gift', 'wrap', 'bow', 'surprise'], answer: 'present' },
+                { words: ['fire', 'warmth', 'light', 'burn'], answer: 'flame' }
+            ],
+            medium: [
+                { words: ['memory', 'forget', 'past', 'nostalgia'], answer: 'remember' },
+                { words: ['cycle', 'repeat', 'loop', 'again'], answer: 'eternal' },
+                { words: ['choice', 'path', 'decision', 'fork'], answer: 'crossroads' }
+            ],
+            hard: [
+                { words: ['paradox', 'time', 'loop', 'contradiction'], answer: 'causality' },
+                { words: ['soul', 'essence', 'self', 'identity'], answer: 'consciousness' },
+                { words: ['sacrifice', 'give', 'offer', 'surrender'], answer: 'devotion' }
+            ]
+        };
+
+        const set = this.pickRandom(wordSets[difficulty] || wordSets.medium);
+        return {
+            type: 'word-association',
+            words: difficulty === 'easy' ? set.words : this.shuffle(set.words),
+            answer: set.answer.toLowerCase(),
+            maxAttempts: difficulty === 'easy' ? 5 : difficulty === 'medium' ? 3 : 2
+        };
+    }
+
+    // Color Matching Puzzle
+    generateColorMatching(difficulty) {
+        const colors = ['red', 'blue', 'green', 'yellow', 'purple', 'orange', 'white', 'silver'];
+        const count = difficulty === 'easy' ? 4 : difficulty === 'medium' ? 6 : 8;
+
+        const sequence = [];
+        for (let i = 0; i < count; i++) {
+            sequence.push(this.pickRandom(colors));
+        }
+
+        return {
+            type: 'color-matching',
+            sequence: sequence,
+            displayTime: difficulty === 'easy' ? 6000 : difficulty === 'medium' ? 4000 : 3000,
+            maxAttempts: difficulty === 'easy' ? 4 : difficulty === 'medium' ? 3 : 2
+        };
+    }
+
+    // Math Sequence Puzzle
+    generateMathSequence(difficulty) {
+        const patterns = {
+            easy: [
+                { sequence: [2, 4, 6, 8], next: 10, rule: 'add 2' },
+                { sequence: [5, 10, 15, 20], next: 25, rule: 'add 5' },
+                { sequence: [1, 2, 4, 8], next: 16, rule: 'multiply by 2' }
+            ],
+            medium: [
+                { sequence: [1, 1, 2, 3, 5], next: 8, rule: 'fibonacci' },
+                { sequence: [1, 4, 9, 16], next: 25, rule: 'squares' },
+                { sequence: [2, 6, 12, 20], next: 30, rule: 'n*(n+1)' }
+            ],
+            hard: [
+                { sequence: [1, 2, 6, 24], next: 120, rule: 'factorial' },
+                { sequence: [2, 3, 5, 7, 11], next: 13, rule: 'primes' },
+                { sequence: [1, 8, 27, 64], next: 125, rule: 'cubes' }
+            ]
+        };
+
+        const pattern = this.pickRandom(patterns[difficulty] || patterns.medium);
+        return {
+            type: 'math-sequence',
+            sequence: pattern.sequence,
+            answer: pattern.next,
+            hint: difficulty === 'easy' ? pattern.rule : null,
+            tolerance: difficulty === 'easy' ? 1 : 0,
+            maxAttempts: difficulty === 'easy' ? 5 : difficulty === 'medium' ? 3 : 2
+        };
+    }
+
+    // Symbol Substitution Puzzle
+    generateSymbolSubstitution(difficulty) {
+        const symbols = {
+            '🔥': 'A', '❄️': 'E', '⭐': 'I', '🎄': 'O',
+            '🎁': 'T', '🔔': 'S', '🕯️': 'N', '⛄': 'R'
+        };
+
+        const words = {
+            easy: ['FIRE', 'STAR', 'TREE'],
+            medium: ['WINTER', 'FROST', 'SEEKER'],
+            hard: ['KINDLING', 'ETERNITY', 'TRANSFORMATION']
+        };
+
+        const word = this.pickRandom(words[difficulty] || words.medium);
+        const symbolWord = word.split('').map(letter => {
+            for (const [symbol, char] of Object.entries(symbols)) {
+                if (char === letter) return symbol;
+            }
+            return letter;
+        }).join('');
+
+        return {
+            type: 'symbol-substitution',
+            symbolWord: symbolWord,
+            answer: word,
+            key: difficulty === 'easy' ? symbols : null,
+            maxAttempts: difficulty === 'easy' ? 5 : difficulty === 'medium' ? 3 : 2
+        };
+    }
+
+    // Maze Navigation Puzzle
+    generateMazeNavigation(difficulty) {
+        const sizes = {
+            easy: 5,
+            medium: 7,
+            hard: 9
+        };
+
+        const size = sizes[difficulty] || 7;
+        const maze = this.generateMaze(size);
+
+        return {
+            type: 'maze-navigation',
+            maze: maze,
+            size: size,
+            timeLimit: difficulty === 'easy' ? 180000 : difficulty === 'medium' ? 120000 : 90000
+        };
+    }
+
+    // Helper to generate a simple maze
+    generateMaze(size) {
+        const maze = Array(size).fill(null).map(() => Array(size).fill(1)); // 1 = wall
+
+        // Simple path generation
+        let x = 1, y = 1;
+        maze[y][x] = 0; // 0 = path
+
+        const directions = [[0, 2], [2, 0], [0, -2], [-2, 0]];
+
+        const carve = (x, y) => {
+            const dirs = this.shuffle([...directions]);
+
+            for (const [dx, dy] of dirs) {
+                const nx = x + dx;
+                const ny = y + dy;
+
+                if (nx > 0 && nx < size - 1 && ny > 0 && ny < size - 1 && maze[ny][nx] === 1) {
+                    maze[ny][nx] = 0;
+                    maze[y + dy / 2][x + dx / 2] = 0;
+                    carve(nx, ny);
+                }
+            }
+        };
+
+        carve(1, 1);
+
+        // Set start and end
+        maze[1][1] = 2; // Start
+        maze[size - 2][size - 2] = 3; // End
+
+        return maze;
+    }
+
+    // Sliding Tile Puzzle
+    generateSlidingTile(difficulty) {
+        const sizes = {
+            easy: 3,
+            medium: 4,
+            hard: 5
+        };
+
+        const size = sizes[difficulty] || 3;
+        const tiles = [];
+
+        for (let i = 1; i < size * size; i++) {
+            tiles.push(i);
+        }
+        tiles.push(0); // Empty space
+
+        // Shuffle
+        const shuffled = this.shuffleTiles(tiles, size, 50);
+
+        return {
+            type: 'sliding-tile',
+            tiles: shuffled,
+            size: size,
+            moves: 0,
+            maxMoves: difficulty === 'easy' ? 100 : difficulty === 'medium' ? 75 : 50
+        };
+    }
+
+    // Helper to shuffle tiles properly (solvable state)
+    shuffleTiles(tiles, size, shuffleCount) {
+        let current = [...tiles];
+        const emptyIndex = current.indexOf(0);
+        let emptyRow = Math.floor(emptyIndex / size);
+        let emptyCol = emptyIndex % size;
+
+        for (let i = 0; i < shuffleCount; i++) {
+            const validMoves = [];
+
+            if (emptyRow > 0) validMoves.push([-1, 0]);
+            if (emptyRow < size - 1) validMoves.push([1, 0]);
+            if (emptyCol > 0) validMoves.push([0, -1]);
+            if (emptyCol < size - 1) validMoves.push([0, 1]);
+
+            const [dr, dc] = this.pickRandom(validMoves);
+            const newRow = emptyRow + dr;
+            const newCol = emptyCol + dc;
+
+            const newIndex = newRow * size + newCol;
+            const oldIndex = emptyRow * size + emptyCol;
+
+            [current[newIndex], current[oldIndex]] = [current[oldIndex], current[newIndex]];
+
+            emptyRow = newRow;
+            emptyCol = newCol;
+        }
+
+        return current;
+    }
+
+    // Anagram Puzzle
+    generateAnagram(difficulty) {
+        const words = {
+            easy: ['FLAME', 'WINTER', 'FROST', 'MAGIC'],
+            medium: ['KINDLING', 'SEEKER', 'GIVER', 'SPIRIT'],
+            hard: ['TRANSFORMATION', 'PARADOX', 'ETERNITY', 'CONSCIOUSNESS']
+        };
+
+        const word = this.pickRandom(words[difficulty] || words.medium);
+        const scrambled = this.shuffle(word.split('')).join('');
+
+        return {
+            type: 'anagram',
+            scrambled: scrambled,
+            answer: word,
+            hint: difficulty === 'easy' ? `${word.length} letters` : null,
+            maxAttempts: difficulty === 'easy' ? 5 : difficulty === 'medium' ? 3 : 2
+        };
+    }
 }
 
 export default ProceduralGenerator;
